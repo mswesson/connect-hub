@@ -198,22 +198,56 @@
    cd connect-hub
    ```
 
-2. Установите docker и docker-compose
+2. Создайте и настройте _.env_ по шаблону _.env.template_
+
+   ```.env
+   # Default settings
+   SECRET_KEY= здесь ваш секретный ключ
+   DEBUG= режим разработки
+   ALLOWED_HOSTS= доступные адреса для входа
+
+   # Database settings
+   POSTGRES_DB= имя базы данных
+   POSTGRES_USER= имя пользователя
+   POSTGRES_PASSWORD= пароль базы данных
+   ```
+
+3. Установите docker и docker-compose
 
    Установить можно с оффициального сайта <https://docs.docker.com/engine/install/>
 
-3. Соберите контейнеры
+4. Установите poetry
+
+   1. ```bash
+      curl -sSL https://install.python-poetry.org | python3 -
+      ```
+
+   2. ```bash
+      export PATH="$HOME/.local/bin:$PATH"
+      ```
+
+   3. ```bash
+      source ~/.bashrc
+      ```
+
+5. Установите зависимости
+
+   ```bash
+   poetry install
+   ```
+
+6. Соберите контейнеры
 
    ```bash
    docker compose build
    ```
 
-4. Запустите сервер
+7. Запустите сервер
 
    ```bash
    docker compose up -d
    ```
 
-5. API готово к работе
+8. API готово к работе
 
    API доступно по адресу <http://127.0.0.1:8000/api/>
