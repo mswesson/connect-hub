@@ -1,22 +1,22 @@
+from random import randint
+from time import sleep
 from typing import Tuple
+
+from django.core.cache import cache
+from django.db.models import Q
+from django.test import Client as RequestsClient
+from django.urls import reverse_lazy
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import status
-from time import sleep
-from random import randint
-from django.core.cache import cache
-from django.db.models import Q
-import requests
-from django.urls import reverse
-from rest_framework.permissions import IsAuthenticated
-
 
 from .models import Client, ClientConnections
 from .serializers import (
     ClientCreateSerializer,
-    ClientProfileSerializer,
     ClientLoginSerializer,
+    ClientProfileSerializer,
 )
 
 
@@ -64,14 +64,22 @@ class ClientCreateApiView(APIView):
 
         serializer.save()
 
-        req_data = {"username": phone, "password": "123456qQ"}
+        request_client = RequestsClient()
+        request_data = {"username": phone, "password": "123456qQ"}
+        url = reverse_lazy("token_obtain_pair")
+        response = request_client.post(
+            path=url,
+            data=request_data,
+            content_type="application/json",
+        )
 
-        url = request.build_absolute_uri(reverse("token_obtain_pair"))
-        token = requests.post(url, json=req_data).json()
-        token = token["access"]
+        if not response.status_code == 200:
+            data = {"error_message": "Connection error"}
+            return Response(data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+        access_token = response.data.get("access")
         data = serializer.data
-        data.update({"access_token": token})
+        data.update({"access": access_token})
 
         return Response(data, status=status.HTTP_201_CREATED)
 
@@ -118,15 +126,23 @@ class ClientLoginApiView(APIView):
             data = {"sms_code": "The code does not match or is outdated"}
             return Response(data, status=status.HTTP_400_BAD_REQUEST)
 
-        req_data = {"username": phone, "password": "123456qQ"}
+        request_client = RequestsClient()
+        request_data = {"username": phone, "password": "123456qQ"}
+        url = reverse_lazy("token_obtain_pair")
+        response = request_client.post(
+            path=url,
+            data=request_data,
+            content_type="application/json",
+        )
 
-        url = request.build_absolute_uri(reverse("token_obtain_pair"))
-        token = requests.post(url, json=req_data).json()
-        token = token["access"]
+        if not response.status_code == 200:
+            data = {"error_message": "Connection error"}
+            return Response(data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+        access_token = response.data.get("access")
         serializer = ClientLoginSerializer(client)
         data = serializer.data
-        data.update({"access_token": token})
+        data.update({"access": access_token})
 
         return Response(data, status=status.HTTP_200_OK)
 
